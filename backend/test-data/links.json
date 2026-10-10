@@ -1,0 +1,53 @@
+{
+  "_about": "Sample inputs for scripts/check-links.mjs. Genuine sites are well-known and long-lived. Fake/dummy names are made up for testing (they imitate banks and offices on purpose); most do not exist, which is fine: the app judges the name and says the site could not be reached.",
+
+  "genuineSites": [
+    { "url": "https://www.india.gov.in", "note": "National Portal of India (gov)", "minScore": 80 },
+    { "url": "https://www.incometax.gov.in", "note": "Income Tax e-filing (gov)", "minScore": 80 },
+    { "url": "https://uidai.gov.in", "note": "Aadhaar / UIDAI (gov)", "minScore": 80 },
+    { "url": "https://www.mygov.in", "note": "MyGov (gov)", "minScore": 80 },
+    { "url": "https://www.sebi.gov.in", "note": "SEBI (gov)", "minScore": 80 },
+    { "url": "https://rbi.org.in", "note": "Reserve Bank of India", "minScore": 80 },
+    { "url": "https://www.irctc.co.in", "note": "Indian Railways ticketing", "minScore": 80 },
+    { "url": "https://sbi.co.in", "note": "State Bank of India", "minScore": 80 },
+    { "url": "https://www.hdfcbank.com", "note": "HDFC Bank", "minScore": 80 },
+    { "url": "https://www.wikipedia.org", "note": "Wikipedia (not in the brand list: scores on age, HTTPS and clean reputation)", "minScore": 80 },
+    { "url": "https://www.python.org", "note": "Python.org (not in the brand list)", "minScore": 80 },
+    { "url": "https://www.amazon.in", "note": "Amazon India", "minScore": 80 }
+  ],
+
+  "brokenPages": [
+    { "url": "https://www.india.gov.in/this-page-does-not-exist-12345", "note": "Real domain, dead page: the Trust Check should stay good, the page itself reports an error" },
+    { "url": "https://www.python.org/no-such-page-12345", "note": "Real domain, dead page" },
+    { "url": "https://www.wikipedia.org/wiki/Special:ThisPageDoesNotExist12345", "note": "Real domain, dead page" }
+  ],
+
+  "fakeSites": [
+    { "url": "http://sbi.login.com", "note": "Bank name placed in front of another website, plain http" },
+    { "url": "https://sbi-kyc-update.com", "note": "Bank + KYC bait" },
+    { "url": "http://hdfcbank-netbanking-verify.in", "note": "Bank name inside a longer address, plain http" },
+    { "url": "https://onlinesbi-secure-login.xyz", "note": "Official-looking name on a cheap ending" },
+    { "url": "http://paytm-kyc-update.co", "note": "Wallet KYC bait, plain http" },
+    { "url": "https://incometax-refund-claim.in", "note": "Tax refund bait" },
+    { "url": "http://aadhaar-update-uidai.com", "note": "Aadhaar update bait, plain http" },
+    { "url": "https://amaz0n-india-offers.shop", "note": "Zero instead of the letter o" },
+    { "url": "http://icicibank.com.security-check.net", "note": "Real-looking bank domain used as a prefix, plain http" },
+    { "url": "https://secure-login.account-verify.top", "note": "No brand at all: a generic login bait on a cheap ending (expect Be Careful or Likely Fake)", "expectAnyOf": ["careful", "likely_fake"] }
+  ],
+
+  "genuineSms": [
+    { "text": "Dear Customer, your income tax return for AY 2026-27 has been processed. Check the status at https://www.incometax.gov.in -Income Tax Department", "minScore": 80 },
+    { "text": "IRCTC: Your ticket booking is confirmed. Manage your booking at https://www.irctc.co.in. Happy journey!", "minScore": 80 },
+    { "text": "Aadhaar: To download your e-Aadhaar, visit https://uidai.gov.in. Do not share your OTP with anyone.", "minScore": 80 },
+    { "text": "HDFC Bank: Your credit card statement is ready. Download it from https://www.hdfcbank.com. Never share your OTP, CVV or PIN with anyone.", "minScore": 80 },
+    { "text": "PM-KISAN: You can check your beneficiary status at https://pmkisan.gov.in anytime. Helpline 155261.", "minScore": 80 }
+  ],
+
+  "fakeSms": [
+    { "text": "SBI ALERT: Your account will be blocked today! Update KYC now: http://sbi-kyc-update.com/login" },
+    { "text": "Dear customer, HDFC reward points worth Rs 9,850 expire today. Redeem now https://hdfcbank-rewards-claim.in" },
+    { "text": "Income Tax Dept: Refund of Rs 24,560 approved. Claim here: http://incometax-refund-claim.in/verify. Enter your card details to receive it." },
+    { "text": "Dear Paytm user, your wallet is suspended due to incomplete KYC. Update PAN within 24 hours: paytm-kyc-update.co/verify" },
+    { "text": "Congratulations! You have won a lottery of Rs 25 lakh. Pay Rs 999 processing fee to claim: hxxps://lucky-draw-winner-india[.]top/claim" }
+  ]
+}

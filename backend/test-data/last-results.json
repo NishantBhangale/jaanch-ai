@@ -1,0 +1,327 @@
+{
+  "genuineSites": [
+    {
+      "label": "https://www.india.gov.in",
+      "verdict": "safe",
+      "score": 75,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.incometax.gov.in",
+      "verdict": "safe",
+      "score": 95,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "label": "https://uidai.gov.in",
+      "verdict": "safe",
+      "score": 95,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "label": "https://www.mygov.in",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.sebi.gov.in",
+      "verdict": "safe",
+      "score": 95,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "label": "https://rbi.org.in",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.irctc.co.in",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://sbi.co.in",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.hdfcbank.com",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.wikipedia.org",
+      "verdict": "careful",
+      "score": 50,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.python.org",
+      "verdict": "careful",
+      "score": 50,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "https://www.amazon.in",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": false,
+      "note": ""
+    }
+  ],
+  "brokenPages": [
+    {
+      "label": "https://www.india.gov.in/this-page-does-not-exist-12345",
+      "verdict": "safe",
+      "score": 75,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "label": "https://www.python.org/no-such-page-12345",
+      "verdict": "careful",
+      "score": 50,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "label": "https://www.wikipedia.org/wiki/Special:ThisPageDoesNotExist12345",
+      "verdict": "careful",
+      "score": 50,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    }
+  ],
+  "fakeSites": [
+    {
+      "label": "http://sbi.login.com",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like State Bank of India, but is not an official State Bank of India site"
+    },
+    {
+      "label": "https://sbi-kyc-update.com",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like State Bank of India, but is not an official State Bank of India site"
+    },
+    {
+      "label": "http://hdfcbank-netbanking-verify.in",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like HDFC Bank, but is not an official HDFC Bank site"
+    },
+    {
+      "label": "https://onlinesbi-secure-login.xyz",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like State Bank of India, but is not an official State Bank of India site"
+    },
+    {
+      "label": "http://paytm-kyc-update.co",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like Paytm, but is not an official Paytm site"
+    },
+    {
+      "label": "https://incometax-refund-claim.in",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like Income Tax Department, but is not an official Income Tax Department site"
+    },
+    {
+      "label": "http://aadhaar-update-uidai.com",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like UIDAI (Aadhaar), but is not an official UIDAI (Aadhaar) site"
+    },
+    {
+      "label": "https://amaz0n-india-offers.shop",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like Amazon India, but is not an official Amazon India site"
+    },
+    {
+      "label": "http://icicibank.com.security-check.net",
+      "verdict": "likely_fake",
+      "score": 5,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": "Looks like ICICI Bank, but is not an official ICICI Bank site"
+    },
+    {
+      "label": "https://secure-login.account-verify.top",
+      "verdict": "careful",
+      "score": 50,
+      "registered": "n/a (lookup_failed)",
+      "brokenLinks": "-",
+      "pass": true,
+      "note": ""
+    }
+  ],
+  "genuineSms": [
+    {
+      "label": "Dear Customer, your income tax return for AY 2026-27 has been processed. Check the status at https://www.incometax.gov.in -Income Tax Department",
+      "verdict": "safe",
+      "score": 95,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "label": "IRCTC: Your ticket booking is confirmed. Manage your booking at https://www.irctc.co.in. Happy journey!",
+      "verdict": "safe",
+      "score": 70,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "label": "Aadhaar: To download your e-Aadhaar, visit https://uidai.gov.in. Do not share your OTP with anyone.",
+      "verdict": "careful",
+      "score": 69,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": false,
+      "note": "asks_secret"
+    },
+    {
+      "label": "HDFC Bank: Your credit card statement is ready. Download it from https://www.hdfcbank.com. Never share your OTP, CVV or PIN with anyone.",
+      "verdict": "careful",
+      "score": 55,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": false,
+      "note": "asks_secret"
+    },
+    {
+      "label": "PM-KISAN: You can check your beneficiary status at https://pmkisan.gov.in anytime. Helpline 155261.",
+      "verdict": "safe",
+      "score": 95,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": ""
+    }
+  ],
+  "fakeSms": [
+    {
+      "label": "SBI ALERT: Your account will be blocked today! Update KYC now: http://sbi-kyc-update.com/login",
+      "verdict": "likely_fake",
+      "score": 0,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": "account_threat kyc_update brand_mismatch"
+    },
+    {
+      "label": "Dear customer, HDFC reward points worth Rs 9,850 expire today. Redeem now https://hdfcbank-rewards-claim.in",
+      "verdict": "likely_fake",
+      "score": 0,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": "urgency prize brand_mismatch"
+    },
+    {
+      "label": "Income Tax Dept: Refund of Rs 24,560 approved. Claim here: http://incometax-refund-claim.in/verify. Enter your card details to receive it.",
+      "verdict": "likely_fake",
+      "score": 0,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": "asks_secret brand_mismatch"
+    },
+    {
+      "label": "Dear Paytm user, your wallet is suspended due to incomplete KYC. Update PAN within 24 hours: paytm-kyc-update.co/verify",
+      "verdict": "likely_fake",
+      "score": 0,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": "account_threat kyc_update urgency brand_mismatch"
+    },
+    {
+      "label": "Congratulations! You have won a lottery of Rs 25 lakh. Pay Rs 999 processing fee to claim: hxxps://lucky-draw-winner-india[.]top/claim",
+      "verdict": "likely_fake",
+      "score": 32,
+      "registered": "?",
+      "brokenLinks": "1 link(s)",
+      "pass": true,
+      "note": "prize pay_fee"
+    }
+  ]
+}
