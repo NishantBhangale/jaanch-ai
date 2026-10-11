@@ -1,6 +1,6 @@
 name: code-quality-check
 
-workflow:
+on:
     workflow_dispatch:
 
 jobs:
