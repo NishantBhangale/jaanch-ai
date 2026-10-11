@@ -4,9 +4,13 @@ on:
     workflow_dispatch:
 
 jobs:
-    dependency-scan-check-frontend:
+    dependency-scan-check:
+        name: ${{ matrix.folder }}-dependency-scan-check
         runs-on: ubuntu-latest
-        needs: [dependency-scan-check-backend]
+        strategy:
+            fail-fast: false
+            matrix:
+                folder: [frontend, backend]
         steps:
             - name: checkout code
               uses: actions/checkout@v4
@@ -16,14 +20,14 @@ jobs:
               with:
                 node-version: 24
                 cache: npm
-                cache-dependency-path: ./frontend/package-lock.json
+                cache-dependency-path: ${{ matrix.folder }}/package-lock.json
             
-            - name: dependency-scan-frontend
-              working-directory: ./frontend
+            - name: dependency-scan-${{ matrix.folder }}
+              working-directory: ${{ matrix.folder }}
               run: npm audit --audit-level=high --json > audit-report.json || true
 
             - name: Print readable summary
-              working-directory: ./frontend
+              working-directory: ${{ matrix.folder }}
               run: |
                 jq '.metadata.vulnerabilities' audit-report.json
                 npm audit || true
@@ -31,35 +35,6 @@ jobs:
             - name: Upload Reports to Artifact
               uses: actions/upload-artifact@v4
               with:
-                name: dependency-scan-frontend-report
-                path: ./frontend/audit-report.json
-                retention-days: 5
-    dependency-scan-check-backend:
-        runs-on: ubuntu-latest
-        steps:
-            - name: checkout code
-              uses: actions/checkout@v4
-              
-            - name: setup node
-              uses: actions/setup-node@v6
-              with:
-                node-version: 24
-                cache: npm
-                cache-dependency-path: ./backend/package-lock.json
-            
-            - name: dependency-scan-backend
-              working-directory: ./backend
-              run: npm audit --audit-level=high --json > audit-report.json || true
-
-            - name: Print readable summary
-              working-directory: ./backend
-              run: |
-                jq '.metadata.vulnerabilities' audit-report.json
-                npm audit || true
-              
-            - name: Upload Reports to Artifact
-              uses: actions/upload-artifact@v4
-              with:
-                name: dependency-scan-backend-report
-                path: ./backend/audit-report.json
+                name: dependency-scan-${{ matrix.folder }}-report
+                path: ${{ matrix.folder }}/audit-report.json
                 retention-days: 5
