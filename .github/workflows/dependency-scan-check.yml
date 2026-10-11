@@ -28,7 +28,7 @@ jobs:
                 npm audit || true
               
             - name: Upload Reports to Artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                 name: dependency-scan-frontend-report
                 path: ./frontend/audit-report.json
