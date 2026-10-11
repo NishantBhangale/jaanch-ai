@@ -33,3 +33,32 @@ jobs:
                 name: dependency-scan-frontend-report
                 path: ./frontend/audit-report.json
                 retention-days: 5
+    dependency-scan-check-backend:
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout code
+              uses: actions/checkout@v4
+              
+            - name: setup node
+              uses: actions/setup-node@v6
+              with:
+                node-version: 24
+                cache: npm
+                cache-dependency-path: ./backend/package-lock.json
+            
+            - name: dependency-scan-backend
+              working-directory: ./backend
+              run: npm audit --audit-level=high --json > audit-report.json || true
+
+            - name: Print readable summary
+              working-directory: ./backend
+              run: |
+                jq '.metadata.vulnerabilities' audit-report.json
+                npm audit || true
+              
+            - name: Upload Reports to Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: dependency-scan-backend-report
+                path: ./backend/audit-report.json
+                retention-days: 5
