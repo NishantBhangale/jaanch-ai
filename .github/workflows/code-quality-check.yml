@@ -4,7 +4,8 @@ on:
     workflow_dispatch:
 
 jobs:
-    $ {{ matrix.folder }} -linter:
+    linter:
+        name: $ {{ matrix.folder }}-linter
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
