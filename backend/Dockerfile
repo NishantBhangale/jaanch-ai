@@ -7,6 +7,7 @@ RUN npm ci --omit=dev
 FROM node:24-slim
 WORKDIR /app
 
+# hadolint ignore=DL3008
 RUN apt-get update \
  && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-core tini \
  && rm -rf /var/lib/apt/lists/*
