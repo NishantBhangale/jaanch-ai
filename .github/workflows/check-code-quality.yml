@@ -1,0 +1,38 @@
+name: code-quality-check
+
+workflow:
+    workflow_dispatch:
+
+jobs:
+    sast:
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout code
+              uses: actions/checkout@v4
+            - name: setup node
+              uses: actions/setup-node@v7
+              with:
+                node-version: 24
+                cache: npm
+                cache-dependency-path: ./frontend/package.json
+            - name: install dependencies
+              run: npm ci
+              working-directory: ./frontend
+            - name: run eslint
+              run: npm run lint
+              working-directory: ./frontend
+            ##########################################################
+            - name: checkout code
+              uses: actions/checkout@v4
+            - name: setup node
+              uses: actions/setup-node@v7
+              with:
+                node-version: 24
+                cache: npm
+                cache-dependency-path: ./backend/package.json
+            - name: install dependencies
+              run: npm ci
+              working-directory: ./backend
+            - name: run eslint
+              run: npm run lint
+              working-directory: ./backend
