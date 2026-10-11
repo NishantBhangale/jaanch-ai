@@ -247,7 +247,6 @@ export function analyzeMessage(text) {
 // ---------------------------------------------------------------- the overall result
 
 const RANK = { safe: 0, careful: 1, likely_fake: 2 };
-const NAMES = ['safe', 'careful', 'likely_fake'];
 const verdictFor = (score) => (score >= 70 ? 'safe' : score >= 40 ? 'careful' : 'likely_fake');
 const worse = (a, b) => (RANK[b] > RANK[a] ? b : a);
 
