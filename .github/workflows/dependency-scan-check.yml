@@ -1,5 +1,8 @@
 name: dependency-scan-check
 
+on:
+    workflow_dispatch:
+
 jobs:
     dependency-scan-check-frontend:
         runs-on: ubuntu-latest
