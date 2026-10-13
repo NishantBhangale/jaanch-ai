@@ -19,7 +19,8 @@ services:
     networks:
       - jaanch-net
   jaanch_backend:
-    build: ./backend
+    #build: ./backend
+    image: ${{ vars.DOCKERHUB_USERNAME }}/jaanch-backend:latest
     container_name: jaanch_backend
     env_file:
       - ./backend/.env
@@ -63,7 +64,8 @@ services:
     networks:
       - jaanch-net
   jaanch_frontend:
-    build: ./frontend
+    #build: ./frontend
+    image: ${{ vars.DOCKERHUB_USERNAME }}/jaanch-frontend:latest
     container_name: jaanch_frontend
     env_file:
       - ./frontend/.env
