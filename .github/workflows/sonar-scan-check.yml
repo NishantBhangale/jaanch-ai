@@ -1,6 +1,6 @@
 name: SonarQube Scan
 on:
-    workflow_dispatch:
+    workflow_call:
 jobs:
     sonar-scan-check:
         runs-on: ubuntu-latest

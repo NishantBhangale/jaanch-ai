@@ -1,6 +1,6 @@
 name: Run Unit Tests
 on:
-    workflow_dispatch:
+    workflow_call:
 jobs:
     run-unit-tests:
         name: ${{ matrix.folder }}-run-unit-tests

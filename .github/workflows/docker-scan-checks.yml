@@ -1,7 +1,7 @@
 name: docker scan-check
 
 on:
-    workflow_dispatch:
+    workflow_call:
 
 jobs:
     docker-file-lint-and-scan:

@@ -1,7 +1,7 @@
 name: dependency-scan-check
 
 on:
-    workflow_dispatch:
+    workflow_call:
 
 jobs:
     dependency-scan-check:

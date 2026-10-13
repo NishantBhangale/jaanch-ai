@@ -1,0 +1,26 @@
+name: ci-devsecops
+on:
+    # push:
+    #     branches:
+    #         - main
+    workflow_dispatch:
+jobs:
+
+    code-quality:
+        uses: ./.github/workflows/code-quality-check.yml
+    secret-scanning:
+        uses: ./.github/workflows/secret-scanning-check.yml
+    dependency-check:
+        uses: ./.github/workflows/dependency-scan-check.yml
+    docker-scan:
+        uses: ./.github/workflows/docker-scan-checks.yml
+        secrets: inherit
+    sonar-scan:
+        uses: ./.github/workflows/sonar-scan-check.yml
+        secrets: inherit
+    code-test:
+        uses: ./.github/workflows/test-code-check.yml
+    docker-push:
+        uses: ./.github/workflows/docker-push.yml
+        needs: [code-quality-check,Secret Scanning Check,dependency-scan-check,docker scan-check,SonarQube Scan,Run Unit Tests]
+        secrets: inherit

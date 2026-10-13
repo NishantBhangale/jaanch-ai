@@ -1,7 +1,7 @@
 name: Push Images to dockerhub
 
 on:
-  workflow_dispatch:
+  workflow_call:
 
 jobs:
   docker-push:
