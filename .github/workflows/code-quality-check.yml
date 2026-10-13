@@ -1,7 +1,7 @@
 name: code-quality-check
 
 on:
-    workflow_call::
+    workflow_call:
 
 jobs:
     linter:
