@@ -22,5 +22,5 @@ jobs:
         uses: ./.github/workflows/test-code-check.yml
     docker-push:
         uses: ./.github/workflows/docker-push.yml
-        needs: [code-quality-check,Secret-Scanning-Check,dependency-scan-check,docker-scan-check,SonarQube-Scan,Test-Code-Check]
+        needs: [code-quality, secret-scanning, dependency-check, docker-scan, sonar-scan, code-test]
         secrets: inherit
