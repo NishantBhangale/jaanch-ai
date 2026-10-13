@@ -1,4 +1,4 @@
-name: docker scan-check
+name: docker-scan-check
 
 on:
     workflow_call:

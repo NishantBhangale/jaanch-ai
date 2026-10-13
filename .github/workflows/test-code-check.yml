@@ -1,4 +1,4 @@
-name: Run Unit Tests
+name: test-code-check
 on:
     workflow_call:
 jobs:

@@ -1,4 +1,4 @@
-name: Push Images to dockerhub
+name: docker-push
 
 on:
   workflow_call:

@@ -4,7 +4,7 @@ on:
     # push:
     #     branches:
     #         - main
-    
+
 jobs:
     code-quality:
         uses: ./.github/workflows/code-quality-check.yml
@@ -22,5 +22,5 @@ jobs:
         uses: ./.github/workflows/test-code-check.yml
     docker-push:
         uses: ./.github/workflows/docker-push.yml
-        needs: [code-quality-check,Secret Scanning Check,dependency-scan-check,docker scan-check,SonarQube Scan,Run Unit Tests]
+        needs: [code-quality-check,Secret-Scanning-Check,dependency-scan-check,docker-scan-check,SonarQube-Scan,Test-Code-Check]
         secrets: inherit
