@@ -44,8 +44,6 @@ plus a full **Health Report** of the website, explained in **English and हि�
 
 **Built with:** Node.js 22+ · Express · React + Vite · PostgreSQL · Lighthouse · Playwright · axe-core · Ollama · Amazon Bedrock · SearXNG · Docker Compose · Terraform · GitHub Actions · AWS Elastic Beanstalk
 
-A file-by-file explanation of the code is in [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md).
-
 ---
 
 ## 🚀 Run it
