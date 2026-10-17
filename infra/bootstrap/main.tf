@@ -26,6 +26,10 @@ locals {
   account_id   = data.aws_caller_identity.me.account_id
   state_bucket = "jaanch-tfstate-${local.account_id}"
   repo         = "${var.github_owner}/${var.github_repo}"
+  # GitHub now puts the immutable numeric IDs in the token's `sub`:
+  #   repo:<owner>@<owner_id>/<repo>@<repo_id>:ref:refs/heads/main
+  # (shown by the "Debug OIDC claims" step). The trust policy must match that.
+  sub_prefix = "repo:${var.github_owner}@${var.github_owner_id}/${var.github_repo}@${var.github_repo_id}"
 }
 
 # ---------- 1. Terraform state bucket ----------
@@ -80,15 +84,17 @@ data "aws_iam_policy_document" "trust" {
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    # Only THIS repo, and only: the main branch, or jobs that use the
-    # "production" / "destroy" GitHub environments (those need approval).
+    # Only THIS repo (pinned by its numeric IDs, so a renamed or re-created
+    # repo with the same name cannot use the role), and only: the main branch,
+    # or jobs that use the "production" / "destroy" GitHub environments
+    # (those need approval).
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:${local.repo}:ref:refs/heads/main",
-        "repo:${local.repo}:environment:production",
-        "repo:${local.repo}:environment:destroy",
+        "${local.sub_prefix}:ref:refs/heads/main",
+        "${local.sub_prefix}:environment:production",
+        "${local.sub_prefix}:environment:destroy",
       ]
     }
   }
