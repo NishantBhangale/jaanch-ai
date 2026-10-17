@@ -1,0 +1,24 @@
+# SearXNG settings for Jaanch.ai's "past reports" lookup.
+# The backend talks to it over the Docker network only, so it is not exposed on the host.
+use_default_settings: true
+
+server:
+  # Set SEARXNG_SECRET in the environment. This value is only a placeholder.
+  secret_key: "set-SEARXNG_SECRET-instead"
+  limiter: false        # the limiter blocks API calls that have no browser headers
+  image_proxy: false
+
+search:
+  safe_search: 0
+  formats:
+    - html
+    - json              # the backend asks for JSON
+
+# Keep it to a few general engines so a lookup stays fast.
+engines:
+  - name: duckduckgo
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: brave
+    disabled: false

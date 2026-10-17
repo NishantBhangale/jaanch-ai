@@ -1,0 +1,2 @@
+# Having this file makes the EB CLI zip the folder as it is, instead of using git (which skips uncommitted files).
+README.md

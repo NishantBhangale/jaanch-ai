@@ -7,3 +7,9 @@ frontend/.env
 backend/.env
 *.log
 .DS_Store
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+deploy/eb/eb.env

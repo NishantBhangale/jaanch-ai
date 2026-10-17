@@ -1,0 +1,61 @@
+
+services:
+  jaanch_backend:
+    image: nishant9272/jaanch-backend:latest
+    container_name: jaanch_backend
+    env_file:
+      - .env
+    shm_size: "1gb"            # Chromium needs shared memory for Lighthouse
+    restart: unless-stopped
+
+  jaanch_frontend:
+    image: nishant9272/jaanch-frontend:latest
+    container_name: jaanch_frontend
+    environment:
+      VITE_BACKEND_URL: http://jaanch_backend:3000   # the frontend forwards /api and /screenshots here
+    ports:
+      - "80:4173"              # the load balancer sends visitors to port 80 on the instance
+    depends_on:
+      - jaanch_backend
+    restart: unless-stopped
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: jaanch_searxng
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-change-me-to-a-long-random-string}   # from the EB property of the same name
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml
+    restart: unless-stopped
+
+  # ---- Ollama: OFF on Elastic Beanstalk while LLM_PROVIDER=bedrock ----
+  # A service with "profiles" is skipped by a plain "docker compose up", which is what EB runs.
+  # To switch it on later, set the EB environment property COMPOSE_PROFILES=ollama, and also
+  # LLM_PROVIDER=ollama, OLLAMA_URL=http://ollama:11434 and OLLAMA_MODEL. It needs an instance with about 16 GB RAM.
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
+  ollama-pull:
+    profiles: ["ollama"]
+    image: ollama/ollama
+    depends_on:
+      - ollama
+    env_file:
+      - .env
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        export OLLAMA_HOST="$$OLLAMA_URL"
+        until ollama list >/dev/null 2>&1; do sleep 2; done
+        ollama pull "$$OLLAMA_MODEL"
+    restart: "no"
+
+volumes:
+  ollama:

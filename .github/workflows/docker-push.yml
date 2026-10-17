@@ -23,6 +23,9 @@ jobs:
       - name: Docker Build and Push
         uses: docker/build-push-action@v7
         with:
-            context: ./${{ matrix.folders}}
-            push: true
-            tags: ${{ vars.DOCKERHUB_USERNAME }}/jaanch-${{ matrix.folders }}:latest
+          context: ./${{ matrix.folders }}
+          push: true
+          #commit-SHA tag so every deployment is traceable and rollback-able.
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/jaanch-${{ matrix.folders }}:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/jaanch-${{ matrix.folders }}:${{ github.sha }}  

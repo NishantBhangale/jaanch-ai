@@ -1,0 +1,91 @@
+name: destroy
+
+# Manual only. Removes everything cd.yml created: Elastic Beanstalk (EC2, load
+# balancer), RDS, the screenshots bucket, the app IAM roles and log groups.
+# It does NOT remove the bootstrap pieces (state bucket, OIDC role) - run
+# infra/bootstrap/bootstrap-destroy.sh on your laptop for those, last.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy" to confirm'
+        required: true
+        type: string
+
+concurrency:
+  group: jaanch-cd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Confirm input
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          [ "${{ inputs.confirm }}" = "destroy" ] || { echo "::error::You must type: destroy"; exit 1; }
+
+  destroy:
+    name: Approve and destroy
+    needs: guard
+    runs-on: ubuntu-latest
+    environment: destroy          # <- required-reviewer approval happens here
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: infra/app
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_bedrock_model_id: ${{ vars.BEDROCK_MODEL_ID }}
+      TF_VAR_safe_browsing_api_key: ${{ secrets.SAFE_BROWSING_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.9
+
+      - name: Init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=jaanch-ai/app.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="use_lockfile=true"
+
+      - name: Terraform destroy
+        run: terraform destroy -input=false -auto-approve -no-color -lock-timeout=5m
+
+      - name: Sweep what Terraform does not own
+        working-directory: .
+        run: |
+          # app bundles uploaded by cd.yml into the shared Elastic Beanstalk bucket
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          aws s3 rm "s3://elasticbeanstalk-${AWS_REGION}-${ACCOUNT}/jaanch-ai/" --recursive || true
+          # log groups (normally removed with the environment)
+          for g in $(aws logs describe-log-groups \
+              --log-group-name-prefix /aws/elasticbeanstalk/jaanch-ai-env/ \
+              --query 'logGroups[].logGroupName' --output text); do
+            aws logs delete-log-group --log-group-name "$g" && echo "deleted $g"
+          done
+
+      - name: Report what is left
+        working-directory: .
+        run: |
+          {
+            echo "### Destroy finished"
+            echo "EB environments left: $(aws elasticbeanstalk describe-environments --application-name jaanch-ai --query 'length(Environments[?Status!=`Terminated`])' --output text 2>/dev/null || echo 0)"
+            echo "RDS instances left: $(aws rds describe-db-instances --query 'length(DBInstances[?starts_with(DBInstanceIdentifier,`jaanch`)])' --output text)"
+            echo
+            echo "Next, on your laptop: infra/bootstrap/bootstrap-destroy.sh (removes the state bucket and OIDC role)."
+          } >> "$GITHUB_STEP_SUMMARY"

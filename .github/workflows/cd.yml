@@ -1,0 +1,348 @@
+name: cd-deploy
+
+# Runs after ci-devsecops finishes successfully on main.
+on:
+  workflow_run:
+    workflows: ["ci-devsecops"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit whose Docker images to deploy (blank = latest commit of the selected branch). Images tagged with this SHA must already exist."
+        required: false
+        type: string
+
+# Never two deployments / applies at once (the Terraform state is locked anyway).
+concurrency:
+  group: jaanch-cd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  # ---------------------------------------------------------------- 1
+  gate:
+    name: "1 · Gate - decide what to deploy"
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    outputs:
+      sha: ${{ steps.pick.outputs.sha }}
+    steps:
+      - id: pick
+        env:
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          SHA="${RUN_SHA:-${INPUT_SHA:-$GITHUB_SHA}}"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "### Deploying commit \`$SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------- 2
+  verify-images:
+    name: "2 · Verify Docker images exist"
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check both images for this commit on Docker Hub
+        env:
+          SHA: ${{ needs.gate.outputs.sha }}
+          HUB_USER: ${{ vars.DOCKERHUB_USERNAME }}
+        run: |
+          for img in jaanch-backend jaanch-frontend; do
+            ref="$HUB_USER/$img:$SHA"
+            ok=0
+            for i in 1 2 3 4 5; do
+              if docker manifest inspect "$ref" >/dev/null 2>&1; then ok=1; break; fi
+              echo "$ref not found yet (try $i/5)"; sleep 15
+            done
+            [ "$ok" = 1 ] || { echo "::error::$ref does not exist. Run ci-devsecops for this commit first."; exit 1; }
+            echo "found $ref"
+          done
+
+  # ---------------------------------------------------------------- 3
+  plan:
+    name: "3 · Terraform validate, scan, plan"
+    needs: [gate, verify-images]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: infra/app
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_bedrock_model_id: ${{ vars.BEDROCK_MODEL_ID }}
+      TF_VAR_safe_browsing_api_key: ${{ secrets.SAFE_BROWSING_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.9
+
+      - name: Format check
+        run: terraform fmt -check -recursive -diff
+
+      - name: Init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=jaanch-ai/app.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="use_lockfile=true"
+
+      - name: Validate
+        run: terraform validate
+
+      - name: IaC security scan (Checkov, report only)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/app
+          framework: terraform
+          soft_fail: true
+          quiet: true
+
+      - name: Plan
+        run: |
+          terraform plan -input=false -no-color -lock-timeout=5m | tee plan.txt
+          {
+            echo '### Terraform plan'
+            echo '```'
+            tail -n 60 plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------- 4
+  apply:
+    name: "4 · Approve and terraform apply"
+    needs: [gate, plan]
+    runs-on: ubuntu-latest
+    environment: production        # <- required-reviewer approval happens here
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: infra/app
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_bedrock_model_id: ${{ vars.BEDROCK_MODEL_ID }}
+      TF_VAR_safe_browsing_api_key: ${{ secrets.SAFE_BROWSING_API_KEY }}
+    outputs:
+      app_name: ${{ steps.out.outputs.app_name }}
+      env_name: ${{ steps.out.outputs.env_name }}
+      url: ${{ steps.out.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.9
+          terraform_wrapper: false   # so `terraform output -raw` is clean
+
+      - name: Init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=jaanch-ai/app.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="use_lockfile=true"
+
+      
+      - name: Apply
+        run: terraform apply -input=false -auto-approve -no-color -lock-timeout=5m
+
+      - id: out
+        name: Read outputs
+        run: |
+          echo "app_name=$(terraform output -raw app_name)" >> "$GITHUB_OUTPUT"
+          echo "env_name=$(terraform output -raw env_name)" >> "$GITHUB_OUTPUT"
+          echo "url=$(terraform output -raw url)"           >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------- 5
+  deploy:
+    name: "5 · Deploy the app to Elastic Beanstalk"
+    needs: [gate, apply]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      previous_label: ${{ steps.prev.outputs.label }}
+      version_label: ${{ steps.ver.outputs.label }}
+    env:
+      APP: ${{ needs.apply.outputs.app_name }}
+      ENVN: ${{ needs.apply.outputs.env_name }}
+      SHA: ${{ needs.gate.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: prev
+        name: Remember the version that is running now (for rollback)
+        run: |
+          LABEL=$(aws elasticbeanstalk describe-environments \
+            --environment-names "$ENVN" \
+            --query 'Environments[0].VersionLabel' --output text)
+          [ "$LABEL" = "None" ] && LABEL=""
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "Currently running: ${LABEL:-<nothing>}"
+
+      - name: Build the bundle (compose pinned to this commit + searxng config)
+        run: |
+          mkdir -p bundle
+          cp deploy/eb/docker-compose.yml bundle/docker-compose.yml
+          cp -r deploy/eb/searxng bundle/searxng
+          # :latest  ->  :<commit sha>   (only our two images)
+          sed -i -E "s#(image: [^ ]+/jaanch-(backend|frontend)):latest#\1:${SHA}#" bundle/docker-compose.yml
+          echo "--- images in the deployed compose file:"
+          grep -n "image:" bundle/docker-compose.yml
+          [ "$(grep -c ":${SHA}" bundle/docker-compose.yml)" = "2" ] || { echo "::error::SHA tag was not applied to both images"; exit 1; }
+          (cd bundle && zip -r ../bundle.zip .)
+
+      - id: ver
+        name: Upload bundle and register an application version
+        run: |
+          LABEL="${SHA::7}-run${{ github.run_number }}"
+          BUCKET=$(aws elasticbeanstalk create-storage-location --query S3Bucket --output text)
+          KEY="$APP/$LABEL.zip"
+          aws s3 cp bundle.zip "s3://$BUCKET/$KEY"
+          aws elasticbeanstalk create-application-version \
+            --application-name "$APP" --version-label "$LABEL" \
+            --description "commit $SHA" \
+            --source-bundle S3Bucket="$BUCKET",S3Key="$KEY"
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy and wait for the environment to be ready
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name "$ENVN" --version-label "${{ steps.ver.outputs.label }}"
+          aws elasticbeanstalk wait environment-updated --environment-names "$ENVN"
+
+      - name: Wait for health Green
+        run: |
+          for i in $(seq 1 30); do
+            H=$(aws elasticbeanstalk describe-environments --environment-names "$ENVN" \
+                --query 'Environments[0].Health' --output text)
+            echo "health: $H (check $i/30)"
+            [ "$H" = "Green" ] && exit 0
+            sleep 20
+          done
+          echo "::error::Environment did not reach Green"; exit 1
+
+  # ---------------------------------------------------------------- 6
+  smoke:
+    name: "6 · Smoke tests"
+    needs: [apply, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the live site
+        env:
+          URL: ${{ needs.apply.outputs.url }}
+        run: |
+          fail=0
+          for path in / /api/ai/status; do
+            ok=0
+            for i in $(seq 1 12); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$URL$path" || true)
+              echo "$path -> $code (try $i/12)"
+              [ "$code" = "200" ] && { ok=1; break; }
+              sleep 10
+            done
+            [ "$ok" = 1 ] || fail=1
+          done
+          [ "$fail" = 0 ] || { echo "::error::Smoke test failed"; exit 1; }
+          echo "### Live site: $URL" >> "$GITHUB_STEP_SUMMARY"
+
+  # ------------------------------------------------------- 6b (on failure)
+  rollback:
+    name: "6b · Roll back to previous version"
+    needs: [apply, deploy, smoke]
+    if: always() && (needs.deploy.result == 'failure' || needs.smoke.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Redeploy the previous version
+        env:
+          ENVN: ${{ needs.apply.outputs.env_name }}
+          PREV: ${{ needs.deploy.outputs.previous_label }}
+        run: |
+          if [ -z "$PREV" ] || [ "$PREV" = "Sample Application" ]; then
+            echo "::warning::No earlier Jaanch version to roll back to (first deployment). Environment left as is."
+            exit 0
+          fi
+          aws elasticbeanstalk update-environment --environment-name "$ENVN" --version-label "$PREV"
+          aws elasticbeanstalk wait environment-updated --environment-names "$ENVN"
+          echo "### Rolled back to \`$PREV\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------- 7
+  dast:
+    name: "7 · DAST (OWASP ZAP)"
+    needs: [apply, smoke]
+    uses: ./.github/workflows/dast.yml
+    with:
+      target_url: ${{ needs.apply.outputs.url }}
+
+  # ---------------------------------------------------------------- 8
+  summary:
+    name: "8 · Run summary"
+    needs: [gate, apply, deploy, smoke, dast]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write summary
+        env:
+          URL: ${{ needs.apply.outputs.url }}
+          SHA: ${{ needs.gate.outputs.sha }}
+          LABEL: ${{ needs.deploy.outputs.version_label }}
+        run: |
+          {
+            echo "## Jaanch.ai CD result"
+            echo "| Stage | Result |"
+            echo "|---|---|"
+            echo "| Apply (infra) | ${{ needs.apply.result }} |"
+            echo "| Deploy | ${{ needs.deploy.result }} |"
+            echo "| Smoke tests | ${{ needs.smoke.result }} |"
+            echo "| DAST | ${{ needs.dast.result }} |"
+            echo
+            echo "Commit: \`$SHA\`  Version: \`$LABEL\`"
+            echo
+            echo "Live: $URL"
+          } >> "$GITHUB_STEP_SUMMARY"
