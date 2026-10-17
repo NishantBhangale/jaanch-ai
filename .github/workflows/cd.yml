@@ -1,6 +1,6 @@
 name: cd-deploy
 
-# Runs after ci-devsecops finishes successfully on main.
+# Runs after ci-devsecops finishes successfully on main (or by hand).
 on:
   workflow_run:
     workflows: ["ci-devsecops"]
@@ -26,7 +26,7 @@ env:
 jobs:
   # ---------------------------------------------------------------- 1
   gate:
-    name: "1 · Gate - decide what to deploy"
+    name: "1.Gate_decide what to deploy"
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -46,7 +46,7 @@ jobs:
 
   # ---------------------------------------------------------------- 2
   verify-images:
-    name: "2 · Verify Docker images exist"
+    name: "2.Verify Docker images exist"
     needs: gate
     runs-on: ubuntu-latest
     steps:
@@ -68,7 +68,7 @@ jobs:
 
   # ---------------------------------------------------------------- 3
   plan:
-    name: "3 · Terraform validate, scan, plan"
+    name: "3.Terraform validate, scan, plan"
     needs: [gate, verify-images]
     runs-on: ubuntu-latest
     permissions:
@@ -86,6 +86,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.gate.outputs.sha }}
+
+      # TEMPORARY - prints the claims GitHub sends so we can compare the `sub`
+      # with the role's trust policy. Remove once the role can be assumed.
+      - name: Debug OIDC claims (temporary)
+        run: |
+          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
+          echo "::add-mask::$TOKEN"
+          python3 - "$TOKEN" <<'PY'
+          import sys, json, base64
+          p = sys.argv[1].split('.')[1]
+          p += '=' * (-len(p) % 4)
+          c = json.loads(base64.urlsafe_b64decode(p))
+          print({k: c.get(k) for k in ('sub', 'aud', 'repository', 'ref', 'event_name')})
+          PY
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -130,7 +145,7 @@ jobs:
 
   # ---------------------------------------------------------------- 4
   apply:
-    name: "4 · Approve and terraform apply"
+    name: "4.Apply and terraform apply"
     needs: [gate, plan]
     runs-on: ubuntu-latest
     environment: production        # <- required-reviewer approval happens here
@@ -172,7 +187,8 @@ jobs:
             -backend-config="region=${{ vars.AWS_REGION }}" \
             -backend-config="use_lockfile=true"
 
-      
+      # The plan is deliberately NOT saved as an artifact: a plan file contains
+      # the generated DB password and this repository is public.
       - name: Apply
         run: terraform apply -input=false -auto-approve -no-color -lock-timeout=5m
 
@@ -185,7 +201,7 @@ jobs:
 
   # ---------------------------------------------------------------- 5
   deploy:
-    name: "5 · Deploy the app to Elastic Beanstalk"
+    name: "5.Deploy to Elastic Beanstalk"
     needs: [gate, apply]
     runs-on: ubuntu-latest
     permissions:
@@ -262,7 +278,7 @@ jobs:
 
   # ---------------------------------------------------------------- 6
   smoke:
-    name: "6 · Smoke tests"
+    name: "6.Smoke tests"
     needs: [apply, deploy]
     runs-on: ubuntu-latest
     steps:
@@ -286,7 +302,7 @@ jobs:
 
   # ------------------------------------------------------- 6b (on failure)
   rollback:
-    name: "6b · Roll back to previous version"
+    name: "6b.Roll back to previous version"
     needs: [apply, deploy, smoke]
     if: always() && (needs.deploy.result == 'failure' || needs.smoke.result == 'failure')
     runs-on: ubuntu-latest
@@ -314,7 +330,7 @@ jobs:
 
   # ---------------------------------------------------------------- 7
   dast:
-    name: "7 · DAST (OWASP ZAP)"
+    name: "7.DAST (OWASP ZAP)"
     needs: [apply, smoke]
     uses: ./.github/workflows/dast.yml
     with:
@@ -322,7 +338,7 @@ jobs:
 
   # ---------------------------------------------------------------- 8
   summary:
-    name: "8 · Run summary"
+    name: "8.Run summary"
     needs: [gate, apply, deploy, smoke, dast]
     if: always()
     runs-on: ubuntu-latest
